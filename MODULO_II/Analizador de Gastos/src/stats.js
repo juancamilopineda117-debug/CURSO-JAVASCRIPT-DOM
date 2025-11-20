@@ -1,54 +1,35 @@
-export const COP =  new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    
-});
+export const COP = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP" });
 
-//funcion suma 
-export  const suma = xs => xs.reduce((a, b) => a + b, 0); // suma todos los elementos de un array
+export const suma = xs => xs.reduce((a, n) => a + n, 0);
+export const promedio = xs => (xs.length ? suma(xs) / xs.length : 0);
 
-//funcion promedio
+// Agrupar por categoría con reduce (sin mutar)
+export function totalPorCategoria(items) {
+  return items.reduce((acc, g) => { //acc es el acumulador osea el objeto que vamos creando y g es el gasto actual
+    const key = g.categoria ?? "sin-categoria"; //?? operador de coalescencia nula, si g.categoria es null o undefined, se usa "sin-categoria"
+    const nuevo = { ...acc }; //  creamos una copia del acumulador para no mutar el original
+    nuevo[key] = (nuevo[key] ?? 0) + g.monto;
+    return nuevo;
+  }, {});
+}
+// ejemplo totasPorCategoria([{monto:100, categoria:"a"},{monto:200, categoria:"b"},{monto:50, categoria:"a"}])
+// devuelve {a:150, b:200}
 
-export const promedio = xs => xs.length  ?  suma(xs) / xs.length : 0; // calcula el promedio de un array
-
-
-// funcion totalPorCategoria
-export function totalPorCategoria(gastos) {
-    return gastos.reduce((acc, gasto) => {  // acc es el acumulador, gasto es el elemento actual del array
-        const key = gasto.categoria ?? 'Sin Categoria'; // si no tiene categoria, se asigna 'Sin Categoria'
-        const nuevo = { ...acc }; // se crea una copia del acumulador
-        nuevo[key] = (nuevo[key] ?? 0) + gasto.monto; // si no existe la categoria, se asigna 0 y se le suma el monto del gasto
-        return nuevo;
-    }, {});
+// Mínimo y máximo
+export function minMax(items) {
+  if (items.length === 0) return { min: 0, max: 0 };
+  const montos = items.map(g => g.monto);
+  return { min: Math.min(...montos), max: Math.max(...montos) };
 }
 
-
-// gasto minimo y maximo
-
-export function minMax(gastos) {
-    if (gastos.length === 0) {
-        return { min: 0, max: 0 };
-    }
-
-    const montos = gastos.map(gasto => gasto.monto); // se crea un array con los montos de los gastos ej [200000, 150000, 300000, 100000, 250000]
-    return {
-        min: Math.min(...montos), // se obtiene el minimo
-        max: Math.max(...montos), // se obtiene el maximo
-    };
+// Top categoría por monto total
+export function topCategoria(items) {
+  const mapa = totalPorCategoria(items);
+  const pares = Object.entries(mapa); // [[categoria, total], ...]
+  if (pares.length === 0) return { categoria: null, total: 0 };
+  const [categoria, total] = pares.reduce((best, cur) => (cur[1] > best[1] ? cur : best));
+  return { categoria, total };
 }
 
-export function topCategoria(gastos) {
-
-    const mapa = totalPorCategoria(gastos); // se obtiene el total por categoria
-    const pares = Object.entries(mapa); // se convierte el objeto en un array de pares [ [categoria, total], [categoria, total], ... ]
-
-    if (pares.length === 0) { // si no hay categorias, se retorna un objeto con categoria 'Sin Categoria' y total 0
-        return { categoria: 'Sin Categoria', total: 0 }; // ejemplo: { categoria: 'Sin Categoria', total: 0 }
-    }
-
-    const [categoria, total] = pares.reduce((maxPar, par) => { // se busca el par con el total maximo
-        return par[1] > maxPar[1] ? par : maxPar; // si el total del par actual es mayor que el maximo, se retorna el par actual
-    }, pares[0]); // se inicia con el primer par
-
-    return { categoria, total }; // se retorna un objeto con la categoria y el total maximo
-}
+// Ejemplo topCategoria([{monto:100, categoria:"a"},{monto:200, categoria:"b"},{monto:50, categoria:"a"}])
+// devuelve {categoria:"b", total:200}
